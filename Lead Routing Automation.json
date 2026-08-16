@@ -1,0 +1,249 @@
+{
+  "name": "Lead Routing Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "12jL6phNzYEVWW0sSDNj_gMJuPf1oh1s3DXV32n4OQvQ",
+          "mode": "list",
+          "cachedResultName": "Lead Intake Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12jL6phNzYEVWW0sSDNj_gMJuPf1oh1s3DXV32n4OQvQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1323180463,
+          "mode": "list",
+          "cachedResultName": "Form_Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12jL6phNzYEVWW0sSDNj_gMJuPf1oh1s3DXV32n4OQvQ/edit#gid=1323180463"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "998c23f5-022f-40ba-9dbc-cf94519b0d0a",
+      "name": "New Lead Submitted",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "1Jy7cdmb1CuvLABt",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "79cc10fb-bac1-4091-8a46-9360536d5182",
+              "name": "=leadScore",
+              "value": "={{ $json['Budget (USD)  ']  >= 10000 ? \"Hot\" : \"Warm\" }}",
+              "type": "string"
+            },
+            {
+              "id": "8d8ff18b-e59d-4c80-9980-c7ce66e0607a",
+              "name": "=assignedChannel",
+              "value": "={{ $json['Budget (USD)  '] >= 10000 ? \"sales\" : \"nurture\" }}",
+              "type": "string"
+            },
+            {
+              "id": "1f0db22e-b1a3-49d0-90aa-20980967f68c",
+              "name": "=receivedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "d486616c-7537-4a7b-88b8-e3394626b61f",
+              "name": "=dataQualityFlag",
+              "value": "={{ $json['Budget (USD)  '] ? \"ok\" : \"MISSING_BUDGET\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        192,
+        0
+      ],
+      "id": "f528052e-d776-4746-8674-475cfaa12aae",
+      "name": "Score & Route Lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8769955f-9e41-4a8f-bba6-fda710a9001e",
+              "leftValue": "={{ $json.assignedChannel }}",
+              "rightValue": "sales",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "6681cec2-8e05-4955-8fdf-79f65ce92bf2",
+      "name": "Budget Threshold Check"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#sales-leads",
+          "mode": "name"
+        },
+        "text": "=🔥 NEW HOT \nLEAD Name: {{ $('New Lead Submitted').item.json['Full Name  '] }}\nEmail: {{ $('New Lead Submitted').item.json['Email  '] }}\nCompany: {{ $('Score & Route Lead').item.json['Company Name  '] }}\nBudget: {{ $('Score & Route Lead').item.json['Budget (USD)  '] }}\nNotes: {{ $('New Lead Submitted').item.json['What are you looking for?  '] }}\nFlag: {{ $('Score & Route Lead').item.json.dataQualityFlag }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "a026319d-5c53-4cce-afd3-4d332e8eea25",
+      "name": "Alert Sales Team",
+      "webhookId": "0c85ceb3-987f-4fe6-8ac3-131aa2e64a52",
+      "credentials": {
+        "slackApi": {
+          "id": "G46iXSCyLVAV88Wi",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#nurture-leads",
+          "mode": "name"
+        },
+        "text": "=📋 New Nurture Lead \nLEAD Name: {{ $('New Lead Submitted').item.json['Full Name  '] }} \nEmail: {{ $('New Lead Submitted').item.json['Email  '] }} \nCompany: {{ $('Score & Route Lead').item.json['Company Name  '] }} \nBudget: {{ $('Score & Route Lead').item.json['Budget (USD)  '] }} \nNotes: {{ $('New Lead Submitted').item.json['What are you looking for?  '] }}\nFlag: {{ $('Score & Route Lead').item.json.dataQualityFlag }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        672,
+        96
+      ],
+      "id": "5ff2a44e-6961-4cbb-9165-ef5e23b698a8",
+      "name": "Add to Nurture Queue",
+      "webhookId": "d2fdc770-9140-4eea-9838-f845b7403549",
+      "credentials": {
+        "slackApi": {
+          "id": "G46iXSCyLVAV88Wi",
+          "name": "Slack account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Lead Routing Automation\nAuto-routes inbound form leads to Sales or Nurture based on budget threshold.\nIncludes data quality flagging + Slack error handling.\n\nTrigger → Enrich/Score → Route → Notify (Slack)\n**By: Ayesha Jabeen**",
+        "height": 208,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -224
+      ],
+      "id": "2792498a-b6fe-4538-ac8b-1deb75289de4",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Lead Submitted": {
+      "main": [
+        [
+          {
+            "node": "Score & Route Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score & Route Lead": {
+      "main": [
+        [
+          {
+            "node": "Budget Threshold Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Budget Threshold Check": {
+      "main": [
+        [
+          {
+            "node": "Alert Sales Team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to Nurture Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "13bfed34-67df-4089-9efb-e16574c88038",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2552994b45ac94ac23145fa7b0c53daaed53d078ed31226fbe70e2652e5da0e0"
+  },
+  "nodeGroups": [],
+  "id": "eQiF5SJzxgouGBft",
+  "tags": []
+}

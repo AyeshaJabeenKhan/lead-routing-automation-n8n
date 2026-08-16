@@ -17,7 +17,7 @@ Automates lead intake, scoring, and Slack notification routing based on budget t
 - Slack API (OAuth2, chat:write scope)
 
 ## Setup
-1. Import `workflow.json` into your n8n instance
+1. Import `lead-routing-automation.json` into your n8n instance
 2. Connect your own Google Sheets and Slack credentials
 3. Update the budget threshold in the "Score & Route Lead" node if needed
 

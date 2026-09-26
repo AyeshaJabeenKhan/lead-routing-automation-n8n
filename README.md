@@ -2,6 +2,9 @@
 
 Automates lead intake, scoring, and Slack notification routing based on budget threshold — eliminates manual lead triage from a form submission to a sales alert.
 
+📺 **Video Walkthrough:** [Watch on YouTube](https://youtu.be/GywV-st5aMk)  
+🌐 **Portfolio:** [ayeshasystems.online](https://ayeshasystems.online)
+
 ## Workflow
 
 ![Workflow Canvas](Screenshots/workflow-canvas.png)
